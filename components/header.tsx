@@ -32,7 +32,7 @@ const MenuItem = ({ title, path }: MenuLink) => {
     // ... And this looks like shit because it doesn't have default bootstrap formatting.
     // <Link href={path}>{title}</Link>
 
-    // So I guess we are stuck without pre-rendering!
+    // So I guess we are stuck without pre-rendering! TODO Unless we can use vanilla bootstrap to style Link...
     <Nav.Link href={path}>{title}</Nav.Link>
   );
 };

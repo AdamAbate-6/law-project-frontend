@@ -4,10 +4,31 @@ import Col from "react-bootstrap/Col";
 import Stack from "react-bootstrap/Stack";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import {useState} from 'react'
+import ChatMessage from "@/components/chatMessage";
 
 const Chat = () => {
+
+  const firstChatMsg = {
+    msg: 'Welcome! How can I help you?',
+    source: 'ai'
+  }
+
+  const [chatLog, setChatLog] = useState([firstChatMsg]);
+  const [input, setInput] = useState('');
+
+  const handleSubmit = () => {
+    // TODO Mock automated reply.
+    if (input.length > 0) {
+        setChatLog(chatLog.concat([{msg: input, source: 'user'}]));
+        // Reset the input box.
+        setInput('');
+    }
+  }
+
   return (
-    <Container className="my-3 h-100">
+    <Container className="my-3 h-100 flex-nowrap">
+        {/* TODO Fix fact that we expand chat box vertically instead of scrolling */}
       <Row className="h-100">
         <Col xs={2}>Side-bar 1</Col>
         <Col className="shadow p-3 mb-5 bg-white rounded">
@@ -30,18 +51,22 @@ const Chat = () => {
             </Container> */}
 
           {/* Try vanilla bootstrap: */}
-          <div className="d-flex flex-column justify-content-between h-100">
-            <div className="p-2">
-                Main content
+          <div className="d-flex flex-column justify-content-between h-100 mw-75">
+
+            {/* Chat */}
+            <div className="p-2 h-100" style={{minWidth: "100%", width: 0}}>
+                {chatLog.map((item, index) => (<ChatMessage {...item} key={index} />))}
             </div>
 
             {/* Inputs */}
             <Stack direction="horizontal" gap={3}>
               <Form.Control
                 className="me-auto"
-                placeholder="Add your item here..."
+                placeholder="Ask a question..."
+                value={input}
+                onChange={event => setInput(event.target.value)}
               />
-              <Button variant="secondary">
+              <Button variant="secondary" onClick={handleSubmit}>
                 {/* <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
