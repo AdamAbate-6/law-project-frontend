@@ -9,7 +9,7 @@ interface Props {
 const Layout = ({children}: Props) => (
     <div className="vh-100">
         <Header />
-        <main className="h-75">{children}</main>
+        <main style={{height: "85%"}}>{children}</main>
     </div>
 )
 

@@ -27,11 +27,10 @@ const Chat = () => {
   }
 
   return (
-    <Container className="my-3 h-100 flex-nowrap">
-        {/* TODO Fix fact that we expand chat box vertically instead of scrolling */}
+    <Container className="my-3 h-100">
       <Row className="h-100">
         <Col xs={2}>Side-bar 1</Col>
-        <Col className="shadow p-3 mb-5 bg-white rounded">
+        <Col className="shadow p-3 bg-white rounded" style={{maxHeight: "100%"}}>
           {/* Can't get lower div of stack to stick at bottom of page: */}
           {/* <Row xs={11}>Main content</Row>
             <Row>Text input</Row> */}
@@ -54,7 +53,7 @@ const Chat = () => {
           <div className="d-flex flex-column justify-content-between h-100 mw-75">
 
             {/* Chat */}
-            <div className="p-2 h-100" style={{minWidth: "100%", width: 0}}>
+            <div className="p-2 h-100 overflow-scroll mb-2" style={{minWidth: "100%", width: 0}}>
                 {chatLog.map((item, index) => (<ChatMessage {...item} key={index} />))}
             </div>
 
