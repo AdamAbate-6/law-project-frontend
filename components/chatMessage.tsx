@@ -14,8 +14,8 @@ const ChatMessage = ({ msg, source }: ChatData) => {
     return (
       <Container>
         <Row>
-          <Col xs={10} className={baseMsgFormat + " bg-light"}>
-            <p className="text-wrap">{msg}</p>
+          <Col xs={10} className={baseMsgFormat + " bg-light"} style={{maxWidth: "100%"}}>
+            {msg}
           </Col>
           <Col xs={2}></Col>
         </Row>
@@ -26,8 +26,8 @@ const ChatMessage = ({ msg, source }: ChatData) => {
       <Container>
         <Row>
           <Col xs={2}></Col>
-          <Col xs={10} className={baseMsgFormat + " bg-secondary text-dark text-wrap"}>
-            <p className="text-wrap mw-100">{msg}</p>
+          <Col xs={10} className={baseMsgFormat + " bg-secondary text-dark text-break"} style={{maxWidth: "100%"}}>
+            {msg}
           </Col>
         </Row>
       </Container>
