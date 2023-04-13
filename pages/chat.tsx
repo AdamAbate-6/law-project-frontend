@@ -4,33 +4,110 @@ import Col from "react-bootstrap/Col";
 import Stack from "react-bootstrap/Stack";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-import {useState} from 'react'
+import { useState, useEffect } from "react";
+import axios from "axios";
 import ChatMessage from "@/components/chatMessage";
 
 const Chat = () => {
+  const apiUrl = "http://localhost:8000/api/";
 
   const firstChatMsg = {
-    msg: 'Welcome! How can I help you?',
-    source: 'ai'
-  }
+    source: "ai",
+    msg: "Welcome! How can I help you?",
+  };
 
   const [chatLog, setChatLog] = useState([firstChatMsg]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
+  const [inputToPush, setInputToPush] = useState("");
+
+  // TODO get user info from sign-in.
+  const userEmail = "a@b.com";
+  const userFirstName = "Adam";
+  const userLastName = "Abate";
+  // TODO this needs to be a state variable that is set after sign-in allows pull from MongoDB users collection using email address.
+  const userId = "1";
+  // TODO Make project choosable by name in side-bar after fetching all projects with the appropriate user ID from MongoDB. Then get projectId from the one selected (i.e. as state).
+  const projectId = "6437ddd6ca1595eac34f0c29";
+  const projectName = "Sample";
+  // TODO Figure out how to use user_id in chat record. Need to update after initial pull of user record from MongoDB in below useEffect.
+
+  // Make sure the user and project exist. This will need to change once above TODOs are complete.
+  useEffect(() => {
+
+    axios.get(apiUrl + "user/" + userEmail)
+        .then((response) => console.log("User is logged in."))
+        .catch((error) => {
+            // If you get a response 404 error from backend, user does not exist.
+            if (error.response) {
+                if (error.response.status === 404) {
+                    axios.post(apiUrl + "user", {"first_name": userFirstName, "last_name": userLastName, "email_address": userEmail, "project_ids": [projectId]})
+                        .then((response) => {
+                            console.log("Created new user with email " + userEmail)
+                            console.log(response)
+                        })
+                }
+            }
+        })
+
+    axios.get(apiUrl + "project/" + projectId)
+        .then((response) => console.log("Project " + projectId + " exists."))
+        .catch((error) => {
+            if (error.response) {
+                if (error.response.status === 404) {
+                    // TODO Implement post in back-end
+                    axios.post(apiUrl + "project", {"name": projectName, "chat": {userId: [firstChatMsg]}, "user_ids": [userId], "document_ids": []})
+                        .then((response) => {
+                            console.log("Created new project with name " + projectName)
+                            console.log(response)
+                        })
+                }
+            }
+        })
+    
+  }, []);
+
+  const pushInput = () => {
+    if (inputToPush.length === 0) {
+        return () => {}
+    }
+    axios.get(apiUrl + "project/" + projectId)
+        .then((response) => {
+            // Project exists, so put chat message from user in DB. TODO
+
+        })
+        .catch((error) => {
+            // TODO Complain in console log about project not existing because it should have already been created by the time user is entering chats.
+        })
+    setInputToPush("")
+    return () => {}
+  };
+
+  useEffect(pushInput(), [inputToPush]);
 
   const handleSubmit = () => {
     // TODO Mock automated reply.
     if (input.length > 0) {
-        setChatLog(chatLog.concat([{msg: input, source: 'user'}]));
-        // Reset the input box.
-        setInput('');
+      // For immediate display purposes, set the chat log to have the most recent message.
+      setChatLog(chatLog.concat([{ msg: input, source: "user" }]));
+
+      // TODO implement effect to put/post user input to DB via FastAPI. Then reset inputToPush to ''.
+      //  In that effect, after put/post is successful, set a different state variable to indicate
+      //  to a different effect that it should start polling until FastAPI finishes its response generation.
+      setInputToPush(input.slice());
+
+      // Reset the input box.
+      setInput("");
     }
-  }
+  };
 
   return (
     <Container className="my-3 h-100">
       <Row className="h-100">
         <Col xs={2}>Side-bar 1</Col>
-        <Col className="shadow p-3 bg-white rounded" style={{maxHeight: "100%"}}>
+        <Col
+          className="shadow p-3 bg-white rounded"
+          style={{ maxHeight: "100%" }}
+        >
           {/* Can't get lower div of stack to stick at bottom of page: */}
           {/* <Row xs={11}>Main content</Row>
             <Row>Text input</Row> */}
@@ -51,10 +128,14 @@ const Chat = () => {
 
           {/* Try vanilla bootstrap: */}
           <div className="d-flex flex-column justify-content-between h-100 mw-75">
-
-            {/* Chat */}
-            <div className="p-2 h-100 overflow-scroll mb-2" style={{minWidth: "100%", width: 0}}>
-                {chatLog.map((item, index) => (<ChatMessage {...item} key={index} />))}
+            {/* Chat history. Note that style tag minWidth and width params prevent growing along cross-axis (horizontally) as per https://stackoverflow.com/questions/24632208/force-flex-element-not-to-grow-in-cross-axis-direction/}
+            <div
+              className="p-2 h-100 overflow-scroll mb-2"
+              style={{ minWidth: "100%", width: 0 }}
+            >
+              {chatLog.map((item, index) => (
+                <ChatMessage {...item} key={index} />
+              ))}
             </div>
 
             {/* Inputs */}
@@ -63,7 +144,7 @@ const Chat = () => {
                 className="me-auto"
                 placeholder="Ask a question..."
                 value={input}
-                onChange={event => setInput(event.target.value)}
+                onChange={(event) => setInput(event.target.value)}
               />
               <Button variant="secondary" onClick={handleSubmit}>
                 {/* <svg
