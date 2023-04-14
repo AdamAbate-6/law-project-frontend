@@ -25,7 +25,7 @@ const Chat = () => {
   const userFirstName = "Adam";
   const userLastName = "Abate";
   // TODO this needs to be a state variable that is set after sign-in allows pull from MongoDB users collection using email address.
-  const userId = "1";
+  const userId = "643755fc038ef6861eea3429";
   // TODO Make project choosable by name in side-bar after fetching all projects with the appropriate user ID from MongoDB. Then get projectId from the one selected (i.e. as state).
   const projectId = "6437ddd6ca1595eac34f0c29";
   const projectName = "Sample";
@@ -37,7 +37,7 @@ const Chat = () => {
     axios.get(apiUrl + "user/" + userEmail)
         .then((response) => console.log("User is logged in."))
         .catch((error) => {
-            // If you get a response 404 error from backend, user does not exist.
+            // If you get a response 404 error from backend, user does not exist. Create one.
             if (error.response) {
                 if (error.response.status === 404) {
                     axios.post(apiUrl + "user", {"first_name": userFirstName, "last_name": userLastName, "email_address": userEmail, "project_ids": [projectId]})
@@ -52,6 +52,7 @@ const Chat = () => {
     axios.get(apiUrl + "project/" + projectId)
         .then((response) => console.log("Project " + projectId + " exists."))
         .catch((error) => {
+          // If you get a response 404 error from backend, project does not exist. Create one.
             if (error.response) {
                 if (error.response.status === 404) {
                     // TODO Implement post in back-end
@@ -59,6 +60,7 @@ const Chat = () => {
                         .then((response) => {
                             console.log("Created new project with name " + projectName)
                             console.log(response)
+                            // TODO After creating project, update project_ids field of user entry with new project ID.
                         })
                 }
             }
@@ -73,12 +75,18 @@ const Chat = () => {
     axios.get(apiUrl + "project/" + projectId)
         .then((response) => {
             // Project exists, so put chat message from user in DB. TODO
-
+            axios.put(apiUrl + "project/" + projectId, {"user_id": userId, "msg": inputToPush});
+            console.log("Pushed the following user input to an entry of the database's projects collection: " + inputToPush);
         })
         .catch((error) => {
             // TODO Complain in console log about project not existing because it should have already been created by the time user is entering chats.
+            console.log(error);
         })
-    setInputToPush("")
+        .finally(() => {
+          setInputToPush("");
+          // TODO Figure out why inputToPush is not being reset to empty string and why we push twice.
+          console.log("Reset inputToPush to be empty: " + inputToPush);
+        })
     return () => {}
   };
 
@@ -128,7 +136,6 @@ const Chat = () => {
 
           {/* Try vanilla bootstrap: */}
           <div className="d-flex flex-column justify-content-between h-100 mw-75">
-            {/* Chat history. Note that style tag minWidth and width params prevent growing along cross-axis (horizontally) as per https://stackoverflow.com/questions/24632208/force-flex-element-not-to-grow-in-cross-axis-direction/}
             <div
               className="p-2 h-100 overflow-scroll mb-2"
               style={{ minWidth: "100%", width: 0 }}
@@ -137,6 +144,8 @@ const Chat = () => {
                 <ChatMessage {...item} key={index} />
               ))}
             </div>
+            {/* Above is chat history. Note that style tag minWidth and width params prevent growing along cross-axis (horizontally) as per https://stackoverflow.com/questions/24632208/force-flex-element-not-to-grow-in-cross-axis-direction/}
+            
 
             {/* Inputs */}
             <Stack direction="horizontal" gap={3}>
