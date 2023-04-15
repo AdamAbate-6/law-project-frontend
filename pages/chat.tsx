@@ -15,10 +15,11 @@ const Chat = () => {
     source: "ai",
     msg: "Welcome! How can I help you?",
   };
+  // TODO Get initial state of chatLog from database on refresh.
 
   const [chatLog, setChatLog] = useState([firstChatMsg]);
   const [input, setInput] = useState("");
-  const [inputToPush, setInputToPush] = useState("");
+  const [aiResponseNeeded, setAiResponseNeeded] = useState(false);
 
   // TODO get user info from sign-in.
   const userEmail = "a@b.com";
@@ -68,29 +69,65 @@ const Chat = () => {
     
   }, []);
 
-  const pushInput = () => {
-    if (inputToPush.length === 0) {
-        return () => {}
-    }
-    axios.get(apiUrl + "project/" + projectId)
-        .then((response) => {
-            // Project exists, so put chat message from user in DB. TODO
-            axios.put(apiUrl + "project/" + projectId, {"user_id": userId, "msg": inputToPush});
-            console.log("Pushed the following user input to an entry of the database's projects collection: " + inputToPush);
-        })
-        .catch((error) => {
-            // TODO Complain in console log about project not existing because it should have already been created by the time user is entering chats.
-            console.log(error);
-        })
-        .finally(() => {
-          setInputToPush("");
-          // TODO Figure out why inputToPush is not being reset to empty string and why we push twice.
-          console.log("Reset inputToPush to be empty: " + inputToPush);
-        })
-    return () => {}
-  };
+  // useEffect(() => {console.log("inputToPush has changed. Current value: " + inputToPush)}, [inputToPush])
 
-  useEffect(pushInput(), [inputToPush]);
+  // const pushInput = () => {
+  //   if (inputToPush.length === 0) {
+  //       return () => {}
+  //   }
+  //   axios.get(apiUrl + "project/" + projectId)
+  //       .then((response) => {
+  //           // Project exists, so put chat message from user in DB. TODO
+  //           axios.put(apiUrl + "project/" + projectId, {"user_id": userId, "msg": inputToPush});
+  //           console.log("Pushed the following user input to an entry of the database's projects collection: " + inputToPush);
+  //       })
+  //       .catch((error) => {
+  //           // TODO Complain in console log about project not existing because it should have already been created by the time user is entering chats.
+  //           console.log(error);
+  //       })
+  //       .finally(() => {
+  //         setInputToPush("");
+  //       })
+  //   return () => {}
+  // };
+
+  // useEffect(pushInput(), [inputToPush]);
+
+  useEffect(() => {
+
+    if (aiResponseNeeded === false) {
+      return () => {}
+    }
+
+    let ignore = false;
+
+    async function startAiProcessing() {
+      const response = await axios.get(apiUrl + "ai", {
+        params: {
+          project_id: projectId,
+          user_id: userId
+        }
+      });
+      // Note 4/15/2023: Bellow commented code was inspired by https://react.dev/learn/synchronizing-with-effects#fetching-data, but it failed to ever write to the console.
+      // Two possible explanations:
+      // 1) Cleanup sets ignore to true before both of React's 2 dev renders, so console.log() never executes. That would imply example in docs is wrong...
+      // 2) setAiResponseNeeded(false) prevents the second execution from ever getting to startAiProcessing(). Doesn't explain why logging fails for first execution.
+      // if (!ignore) {
+      //   // Test with dummy response.
+      //   console.log('AI says hello!')
+      //   // setTodos(json);
+      // }
+      console.log('AI says hello!')
+    }
+
+    startAiProcessing();
+    setAiResponseNeeded(false);
+
+    return () => {
+      ignore = true;
+    };
+
+  }, [aiResponseNeeded])
 
   const handleSubmit = () => {
     // TODO Mock automated reply.
@@ -98,10 +135,17 @@ const Chat = () => {
       // For immediate display purposes, set the chat log to have the most recent message.
       setChatLog(chatLog.concat([{ msg: input, source: "user" }]));
 
-      // TODO implement effect to put/post user input to DB via FastAPI. Then reset inputToPush to ''.
-      //  In that effect, after put/post is successful, set a different state variable to indicate
-      //  to a different effect that it should start polling until FastAPI finishes its response generation.
-      setInputToPush(input.slice());
+      // // TODO implement effect to put/post user input to DB via FastAPI. Then reset inputToPush to ''.
+      // //  In that effect, after put/post is successful, set a different state variable to indicate
+      // //  to a different effect that it should start polling until FastAPI finishes its response generation.
+      // setInputToPush(input.slice());
+
+      // Put new chat message in DB so API can process it.
+      axios.put(apiUrl + "project/" + projectId, {"user_id": userId, "msg": input});
+      console.log("Pushed the following user input to an entry of the database's projects collection: " + input);
+
+      // Set the flag to ask for a response from the AI.
+      setAiResponseNeeded(true);
 
       // Reset the input box.
       setInput("");
