@@ -117,7 +117,12 @@ const Chat = () => {
       //   console.log('AI says hello!')
       //   // setTodos(json);
       // }
-      console.log('AI says hello!')
+
+      // For debugging.
+      // console.log('AI says hello!')
+
+      // Put the AI's response in the chatLog state variable so React can re-render and display it.
+      setChatLog(chatLog.concat([{ msg: response.data.msg, source: "ai" }]));
     }
 
     startAiProcessing();
