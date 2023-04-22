@@ -7,6 +7,7 @@ import Form from "react-bootstrap/Form";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import ChatMessage from "@/components/chatMessage";
+import PatentEntry from "@/components/patentEntry";
 
 const Chat = () => {
   const apiUrl = "http://localhost:8000/api/";
@@ -15,88 +16,203 @@ const Chat = () => {
     source: "ai",
     msg: "Welcome! How can I help you?",
   };
-  // TODO Get initial state of chatLog from database on refresh.
 
+  interface UserData {
+    // Same as User BaseModel in backend's models.py
+    mongo_id: string;
+    first_name: string;
+    last_name: string;
+    email_address: string;
+    project_ids: string[];
+  }
+
+  const [userData, setUserData] = useState<UserData>({
+    mongo_id: "",
+    first_name: "",
+    last_name: "",
+    email_address: "",
+    project_ids: [""],
+  });
   const [chatLog, setChatLog] = useState([firstChatMsg]);
   const [input, setInput] = useState("");
   const [aiResponseNeeded, setAiResponseNeeded] = useState(false);
+  const [activeProjectId, setActiveProjectId] = useState("");
+  const [allProjectIds, setAllProjectIds] = useState([""]);
 
-  // TODO get user info from sign-in.
   const userEmail = "a@b.com";
   const userFirstName = "Adam";
   const userLastName = "Abate";
-  // TODO this needs to be a state variable that is set after sign-in allows pull from MongoDB users collection using email address.
-  const userId = "643755fc038ef6861eea3429";
-  // TODO Make project choosable by name in side-bar after fetching all projects with the appropriate user ID from MongoDB. Then get projectId from the one selected (i.e. as state).
-  const projectId = "6437ddd6ca1595eac34f0c29";
-  const projectName = "Sample";
-  // TODO Figure out how to use user_id in chat record. Need to update after initial pull of user record from MongoDB in below useEffect.
-
-  // Make sure the user and project exist. This will need to change once above TODOs are complete.
+  // const projectId = "6437ddd6ca1595eac34f0c29";
+  // const projectName = "Sample";
+  
+  // Make sure the user exists. This will need to change once above TODOs are complete.
   useEffect(() => {
-
-    axios.get(apiUrl + "user/" + userEmail)
-        .then((response) => console.log("User is logged in."))
-        .catch((error) => {
-            // If you get a response 404 error from backend, user does not exist. Create one.
-            if (error.response) {
-                if (error.response.status === 404) {
-                    axios.post(apiUrl + "user", {"first_name": userFirstName, "last_name": userLastName, "email_address": userEmail, "project_ids": [projectId]})
-                        .then((response) => {
-                            console.log("Created new user with email " + userEmail)
-                            console.log(response)
-                        })
-                }
+    let ignore = false;
+    const getOrCreateUser = async () => {
+      try {
+        const response = await axios.get(apiUrl + "user/" + userEmail);
+        if (!ignore) {
+          setUserData(response.data);
+          console.log("User is logged in.");
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          // If error came from server response rather than during request or elsewhere...
+          if (error.response) {
+            // A 404 means the user did not exist. Make one.
+            if (error.response.status === 404) {
+              if (ignore){
+                console.log("User does not exist, but this is the second of two nearly contemporaneous renders (e.g. in React dev mode), so trusting the first to create the user; will not do a second POST.")
+              }
+              else{
+                axios
+                .post(apiUrl + "user", {
+                  first_name: userFirstName,
+                  last_name: userLastName,
+                  email_address: userEmail,
+                  project_ids: [],
+                })
+                .then((response) => {
+                  console.log("Created new user with email " + userEmail);
+                  console.log(response);
+                  setUserData(response.data);
+                })
+                .catch((error) => {
+                  throw error;
+                }); // TODO Improve error handling for failed new user creation.
+              }             
+            } else {
+              throw error;
             }
-        })
+          } else {
+            throw error;
+          }
+        } else {
+          throw error;
+        }
+      }
+    };
 
-    axios.get(apiUrl + "project/" + projectId)
-        .then((response) => console.log("Project " + projectId + " exists."))
-        .catch((error) => {
-          // If you get a response 404 error from backend, project does not exist. Create one.
-            if (error.response) {
-                if (error.response.status === 404) {
-                    // TODO Implement post in back-end
-                    axios.post(apiUrl + "project", {"name": projectName, "chat": {userId: [firstChatMsg]}, "user_ids": [userId], "document_ids": []})
-                        .then((response) => {
-                            console.log("Created new project with name " + projectName)
-                            console.log(response)
-                            // TODO After creating project, update project_ids field of user entry with new project ID.
-                        })
-                }
-            }
-        })
-    
+    getOrCreateUser();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  // useEffect(() => {console.log("inputToPush has changed. Current value: " + inputToPush)}, [inputToPush])
+  // If the user changes, get his/her list of projects (or create one if necessary) and set one to be active.
+  useEffect(() => {
+    // First check that userData has been populated.
+    const noUserFields =
+      !userData.mongo_id ||
+      !userData.email_address ||
+      !userData.first_name ||
+      !userData.last_name ||
+      !userData.project_ids;
+    const noUserId = userData.mongo_id.length == 0;
+    if (noUserFields || noUserId) {
+      return () => {};
+    }
 
-  // const pushInput = () => {
-  //   if (inputToPush.length === 0) {
-  //       return () => {}
-  //   }
-  //   axios.get(apiUrl + "project/" + projectId)
-  //       .then((response) => {
-  //           // Project exists, so put chat message from user in DB. TODO
-  //           axios.put(apiUrl + "project/" + projectId, {"user_id": userId, "msg": inputToPush});
-  //           console.log("Pushed the following user input to an entry of the database's projects collection: " + inputToPush);
-  //       })
-  //       .catch((error) => {
-  //           // TODO Complain in console log about project not existing because it should have already been created by the time user is entering chats.
-  //           console.log(error);
-  //       })
-  //       .finally(() => {
-  //         setInputToPush("");
-  //       })
-  //   return () => {}
-  // };
+    const userId = userData.mongo_id;
 
-  // useEffect(pushInput(), [inputToPush]);
+    // Create a project if the user does not have any.
+    if (userData.project_ids?.length === 0) {
+      const defaultProjectName = "Default";
+      axios
+        .post(apiUrl + "project", {
+          name: defaultProjectName,
+          chat: { [userId]: [firstChatMsg] },
+          patents: { [userId]: [] },
+          user_ids: [userId],
+          document_ids: [],
+        })
+        .then((response) => {
+          console.log("Created new project with name " + defaultProjectName);
+          console.log(response);
+
+          const newProjectId = response.data.mongo_id;
+          setActiveProjectId(newProjectId);
+          setAllProjectIds([newProjectId]);
+
+          // Update user entry with this new project ID.
+          axios
+            .put(apiUrl + "user/" + userId, { project_ids: [newProjectId] })
+            .then((response) =>
+              console.log(
+                "Database entry of user " +
+                  userId +
+                  " had new project ID " +
+                  newProjectId + " appended to its project_ids field."
+              )
+            )
+            .catch((error) => {
+              if (error.response) {
+                if (error.response.status === 400) {
+                  console.log(
+                    "Something went wrong during user update; project " +
+                      newProjectId +
+                      " not added to user's list of projects."
+                  );
+                } else {
+                  throw error;
+                }
+              } else {
+                throw error;
+              }
+            });
+        })
+        .catch((error) => {
+          if (error.response) {
+            if (error.response.status === 400) {
+              console.log(
+                "Something went wrong during project creation; project not created."
+              );
+            } else {
+              throw error;
+            }
+          } else {
+            throw error;
+          }
+        });
+    }
+    // If the user has a project, get the first one (assumed to be default)
+    else {
+      const projectId = userData.project_ids[0];
+
+      setAllProjectIds(userData.project_ids);
+
+      axios
+        .get(apiUrl + "project/" + projectId)
+        .then((response) => {
+          console.log(
+            "Project " +
+              projectId +
+              " exists and is being made the active project."
+          );
+          setActiveProjectId(projectId);
+        })
+        .catch((error) => {
+          // If you get a response 404 error from backend, project does not exist.
+          if (error.response) {
+            if (error.response.status === 404) {
+              throw (
+                "Project ID " +
+                projectId +
+                " is in the list of user project_ids, but it does not exist in the database."
+              );
+            }else {
+              throw error;
+            }
+          }else {
+            throw error;
+          }
+        });
+    }
+  }, [userData]);
 
   useEffect(() => {
-
     if (aiResponseNeeded === false) {
-      return () => {}
+      return () => {};
     }
 
     let ignore = false;
@@ -104,9 +220,9 @@ const Chat = () => {
     async function startAiProcessing() {
       const response = await axios.get(apiUrl + "ai", {
         params: {
-          project_id: projectId,
-          user_id: userId
-        }
+          project_id: activeProjectId,
+          user_id: userData.mongo_id,
+        },
       });
       // Note 4/15/2023: Bellow commented code was inspired by https://react.dev/learn/synchronizing-with-effects#fetching-data, but it failed to ever write to the console.
       // Two possible explanations:
@@ -131,23 +247,23 @@ const Chat = () => {
     return () => {
       ignore = true;
     };
-
-  }, [aiResponseNeeded])
+  }, [aiResponseNeeded]);
 
   const handleSubmit = () => {
-    // TODO Mock automated reply.
+
     if (input.length > 0) {
       // For immediate display purposes, set the chat log to have the most recent message.
       setChatLog(chatLog.concat([{ msg: input, source: "user" }]));
 
-      // // TODO implement effect to put/post user input to DB via FastAPI. Then reset inputToPush to ''.
-      // //  In that effect, after put/post is successful, set a different state variable to indicate
-      // //  to a different effect that it should start polling until FastAPI finishes its response generation.
-      // setInputToPush(input.slice());
-
       // Put new chat message in DB so API can process it.
-      axios.put(apiUrl + "project/" + projectId, {"user_id": userId, "msg": input});
-      console.log("Pushed the following user input to an entry of the database's projects collection: " + input);
+      axios.put(apiUrl + "project/" + activeProjectId, {
+        user_id: userData.mongo_id,
+        msg: input,
+      });
+      console.log(
+        "Pushed the following user input to an entry of the database's projects collection: " +
+          input
+      );
 
       // Set the flag to ask for a response from the AI.
       setAiResponseNeeded(true);
@@ -160,7 +276,17 @@ const Chat = () => {
   return (
     <Container className="my-3 h-100">
       <Row className="h-100">
-        <Col xs={2}>Side-bar 1</Col>
+        {/* *** Patent entry area *** */}
+        <Col xs={3}>
+          Enter patents you would like the AI to consider in your question.
+          <PatentEntry
+            apiUrl={apiUrl}
+            projectId={activeProjectId}
+            userId={userData.mongo_id}
+          />
+        </Col>
+
+        {/* *** Main chat area *** */}
         <Col
           className="shadow p-3 bg-white rounded"
           style={{ maxHeight: "100%" }}
