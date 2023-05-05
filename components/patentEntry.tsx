@@ -33,20 +33,23 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
       try {
         //  TODO Implement post method in main.py and its DB ops in database.py
         const response = await axios.post(apiUrl + "patent/" + patent);
-        console.log("Successfully pulled patent " + patent + " from BigQuery into backend DB.")
+        console.log("Either " + patent + " already exists in backend DB or we successfully pulled it into backend DB.")
+        // console.log(response.data.title) // To confirm that patent was successfully queried.
       } catch (error) {
         if (axios.isAxiosError(error)) {
           // If error came from server response rather than during request or elsewhere...
           if (error.response) {
-            // A 404 means the user did not exist. Make one.
-            if (error.response.status === 404) {
-              // TODO Error handling? Probs not 404
+            // A 400 means we failed trying to put the patent into the DB.
+            if (error.response.status === 400) {
+              console.log("Failed to pull " + patent + " into backend DB.")
+              // TODO handle error
             }
           }
         }
       }
     }
-  }, patentsToProcess)
+    pullPatent()
+  }, [patentsToProcess])
 
   const addPatent = async (
     apiUrl: string,
@@ -63,7 +66,7 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
         patent_office: patentOfficeCode,
       });
       console.log(
-        "Added patent " +
+        "If it didn't already exist, added patent " +
           patentOfficeCode +
           patentNumber +
           " to project " +
@@ -77,7 +80,7 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
       if (axios.isAxiosError(error)) {
         // If error came from server response rather than during request or elsewhere...
         if (error.response) {
-          // A 404 means the user did not exist. Make one.
+          // A 400 means we ran into some error modifying the project to have this patent.
           if (error.response.status === 400) {
             console.log(
               "Something went wrong while adding patent " +
