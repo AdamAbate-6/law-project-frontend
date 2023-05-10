@@ -26,7 +26,7 @@ const ChatMessage = ({ msg, source }: ChatData) => {
       <Container>
         <Row>
           <Col xs={2}></Col>
-          <Col xs={10} className={baseMsgFormat + " bg-secondary text-dark text-break"} style={{maxWidth: "100%"}}>
+          <Col xs={10} className={baseMsgFormat + " bg-secondary text-light text-break"} style={{maxWidth: "100%"}}>
             {msg}
           </Col>
         </Row>
