@@ -412,12 +412,18 @@ const Chat = () => {
 
         {/* *** Patent entry area *** */}
         <Col xs={3}>
-          Enter patents you would like the AI to consider in your question.
-          <PatentEntry
-            apiUrl={apiUrl}
-            projectId={activeProjectId}
-            userId={userData.mongo_id}
-          />
+          <Row className="rounded shadow py-2 px-2 mx-1" style={{backgroundColor: "#E6E6E6"}}>
+            Enter patents you would like the AI to consider in your question.
+            <PatentEntry 
+              apiUrl={apiUrl}
+              projectId={activeProjectId}
+              userId={userData.mongo_id}
+            />
+          </Row>
+
+          <Row className="rounded shadow py-2 px-2 mx-1 my-4" style={{backgroundColor: "#E6E6E6"}}>
+            Saved chat snippets:
+          </Row>
         </Col>
       </Row>
     </Container>

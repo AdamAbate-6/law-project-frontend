@@ -18,11 +18,19 @@ interface ProjectsSelectionSidebarParams {
 const ProjectDisplay = ({projectName, projectId, activeProjectId}: ProjectDisplayParams) => {
     // TODO Make this interactive; selecting a project name should make it the active project.
     // TODO Display the active project differently.
-    return (<>
-        <hr/>
-        <p>{projectName}</p>
-        <hr/>
-        </>
+    var bgColor;
+    var className = "rounded p-1";
+    if (projectId === activeProjectId) {
+        bgColor = "#E6E6E6"
+        className = className + " shadow";
+    }
+    else {
+        bgColor = "#F8F9FA"
+    }
+    return (
+        <div className={className} style={{backgroundColor: bgColor}}>
+            {projectName}
+        </div>
     )
 }
 

@@ -1,5 +1,6 @@
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+import Container from 'react-bootstrap/Container'
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import axios from "axios";
@@ -106,7 +107,8 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
   };
 
   return (
-    <Row s={1}>
+    <Container fluid>
+    <Row s={1} >
       <Col md={3} style={{ padding: "1px" }}>
         <Form.Select
           aria-label="US"
@@ -147,6 +149,7 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
         </Button>
       </Col>
     </Row>
+    </Container>
   );
 };
 
