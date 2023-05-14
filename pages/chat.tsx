@@ -424,6 +424,10 @@ const Chat = () => {
           <Row className="rounded shadow py-2 px-2 mx-1 my-4" style={{backgroundColor: "#E6E6E6"}}>
             Saved chat snippets:
           </Row>
+
+          <Row className="shadow rounded mx-1 my-4">
+            <Button variant="outline-danger">Clear All Chat Messages</Button>
+          </Row>
         </Col>
       </Row>
     </Container>
