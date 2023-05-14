@@ -320,21 +320,24 @@ const Chat = () => {
       //   msg: input,
       // });
       const userId = userData.mongo_id;
-      axios.put(
-        apiUrl + "project/" + activeProjectId,
-        {
-          chat: { [userId]: chatLog },
-        },
-        {
-          params: {
-            user_id: userId,
+      axios
+        .put(
+          apiUrl + "project/" + activeProjectId,
+          {
+            chat: { [userId]: chatLog },
           },
-        }
-      );
-      console.log(
-        "Pushed the following user input to an entry of the database's projects collection: " +
-          input
-      );
+          {
+            params: {
+              user_id: userId,
+            },
+          }
+        )
+        .then((response) =>
+          console.log(
+            "Pushed the following user input to an entry of the database's projects collection: " +
+              input
+          )
+        );
 
       // Set the flag to ask for a response from the AI.
       setAiResponseNeeded(true);
@@ -346,6 +349,21 @@ const Chat = () => {
 
   const handleChatDelete = () => {
     setChatLog([firstChatMsg]);
+
+    const userId = userData.mongo_id;
+    axios
+      .put(
+        apiUrl + "project/" + activeProjectId,
+        {
+          chat: { [userId]: [firstChatMsg] },
+        },
+        {
+          params: {
+            user_id: userId,
+          },
+        }
+      )
+      .then((response) => console.log("Deleted chat log for user  " + userId));
   };
 
   return (
