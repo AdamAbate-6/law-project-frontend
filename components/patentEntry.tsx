@@ -1,11 +1,10 @@
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import Container from 'react-bootstrap/Container'
+import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import axios from "axios";
 import { useState, useEffect } from "react";
-
 
 interface PatentEntryParams {
   apiUrl: string;
@@ -22,19 +21,22 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
 
   useEffect(() => {
     const pullPatent = async () => {
-
       if (patentsToProcess.length == 0) {
-        return () => {}
+        return () => {};
       }
 
       // Get a patent (country code plus number) to process and remove it from the array.
       const patent = patentsToProcess[0];
-      setPatentsToProcess(patentsToProcess.filter(item => item !== patent))
+      setPatentsToProcess(patentsToProcess.filter((item) => item !== patent));
 
       try {
         //  TODO Implement post method in main.py and its DB ops in database.py
         const response = await axios.post(apiUrl + "patent/" + patent);
-        console.log("Either " + patent + " already exists in backend DB or we successfully pulled it into backend DB.")
+        console.log(
+          "Either " +
+            patent +
+            " already exists in backend DB or we successfully pulled it into backend DB."
+        );
         // console.log(response.data.title) // To confirm that patent was successfully queried.
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -42,15 +44,15 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
           if (error.response) {
             // A 400 means we failed trying to put the patent into the DB.
             if (error.response.status === 400) {
-              console.log("Failed to pull " + patent + " into backend DB.")
+              console.log("Failed to pull " + patent + " into backend DB.");
               // TODO handle error
             }
           }
         }
       }
-    }
-    pullPatent()
-  }, [patentsToProcess])
+    };
+    pullPatent();
+  }, [patentsToProcess]);
 
   const addPatent = async (
     apiUrl: string,
@@ -61,11 +63,25 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
   ) => {
     // TODO  handle validation in backend, comparison against other patent numbers inputted. In turn, this needs to alert if validation or something else fails. Also reset patent number to empty.
     try {
-      const response = await axios.put(apiUrl + "project/" + projectId, {
-        user_id: userId,
-        patent_number: patentNumber,
-        patent_office: patentOfficeCode,
-      });
+      // const response = await axios.put(apiUrl + "project/" + projectId, {
+      //   user_id: userId,
+      //   patent_number: patentNumber,
+      //   patent_office: patentOfficeCode,
+      // });
+      const response = await axios.put(
+        apiUrl + "project/" + projectId,
+        {
+          patents: {
+            // TODO Allow for multiple entered patents. This will change entry in DB to have only one on every call to addPatent.
+            [userId]: [{ office: patentOfficeCode, number: patentNumber }],
+          },
+        },
+        {
+          params: {
+            user_id: userId,
+          },
+        }
+      );
       console.log(
         "If it didn't already exist, added patent " +
           patentOfficeCode +
@@ -75,8 +91,9 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
           " for user " +
           userId
       );
-      setPatentsToProcess(patentsToProcess.concat([patentOfficeCode + patentNumber]))
-
+      setPatentsToProcess(
+        patentsToProcess.concat([patentOfficeCode + patentNumber])
+      );
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // If error came from server response rather than during request or elsewhere...
@@ -108,14 +125,14 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
 
   return (
     <Container fluid>
-    <Row s={1} >
-      <Col md={3} style={{ padding: "1px" }}>
-        <Form.Select
-          aria-label="US"
-          onChange={(event) => setPatentOfficeCode(event.target.value)}
-        >
-          <option value="US">US</option>
-          {/* <option value="WO">WO</option>
+      <Row s={1}>
+        <Col md={3} style={{ padding: "1px" }}>
+          <Form.Select
+            aria-label="US"
+            onChange={(event) => setPatentOfficeCode(event.target.value)}
+          >
+            <option value="US">US</option>
+            {/* <option value="WO">WO</option>
           <option value="EP">EP</option>
           <option value="CN">CN</option>
           <option value="JP">JP</option>
@@ -128,27 +145,33 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
           <option value="RU">RU</option>
           <option value="AT">AT</option>
           <option value="IT">AT</option> */}
-        </Form.Select>
-      </Col>
-      <Col md={6} style={{ padding: "1px" }}>
-        <Form.Control
-          className="me-auto"
-          placeholder="Patent Number"
-          value={patentNumber}
-          onChange={(event) => setPatentNumber(event.target.value)}
-        />
-      </Col>
-      <Col md={3} style={{ padding: "1px" }}>
-        <Button
-          variant="secondary"
-          onClick={() =>
-            addPatent(apiUrl, projectId, userId, patentNumber, patentOfficeCode)
-          }
-        >
-          Add
-        </Button>
-      </Col>
-    </Row>
+          </Form.Select>
+        </Col>
+        <Col md={6} style={{ padding: "1px" }}>
+          <Form.Control
+            className="me-auto"
+            placeholder="Patent Number"
+            value={patentNumber}
+            onChange={(event) => setPatentNumber(event.target.value)}
+          />
+        </Col>
+        <Col md={3} style={{ padding: "1px" }}>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              addPatent(
+                apiUrl,
+                projectId,
+                userId,
+                patentNumber,
+                patentOfficeCode
+              )
+            }
+          >
+            Add
+          </Button>
+        </Col>
+      </Row>
     </Container>
   );
 };

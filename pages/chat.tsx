@@ -117,28 +117,26 @@ const Chat = () => {
 
   // If the user changes, get his/her list of projects (or create one if necessary) and set one to be active.
   useEffect(() => {
-
     // This function is used when the user already has at least one project and we want to retrieve info about
     //  the project(s).
     function getUserProjectDetails(callback: Function) {
       var tmpProjDetails: ProjectInfo[];
       tmpProjDetails = [];
 
-      const defaultProjectId = userData.project_ids[0];  // TODO let this be configurable. Post-MVP. 
+      const defaultProjectId = userData.project_ids[0]; // TODO let this be configurable. Post-MVP.
 
       for (let i = 0; i < userData.project_ids.length; i++) {
-
         const projectId = userData.project_ids[i];
 
         axios
           .get(apiUrl + "project/" + projectId)
           .then((response) => {
-
-            tmpProjDetails = tmpProjDetails.concat(tmpProjDetails, 
-              [{
+            tmpProjDetails = tmpProjDetails.concat(tmpProjDetails, [
+              {
                 mongo_id: response.data.mongo_id,
-                name: response.data.name
-              }]);
+                name: response.data.name,
+              },
+            ]);
 
             if (projectId == defaultProjectId) {
               console.log(
@@ -152,7 +150,7 @@ const Chat = () => {
             }
 
             if (tmpProjDetails.length === userData.project_ids.length) {
-              callback(tmpProjDetails)
+              callback(tmpProjDetails);
             }
           })
           .catch((error) => {
@@ -172,7 +170,7 @@ const Chat = () => {
             }
           });
       }
-      return tmpProjDetails
+      return tmpProjDetails;
     }
 
     // First check that userData has been populated.
@@ -261,9 +259,9 @@ const Chat = () => {
       const projectId = userData.project_ids[0];
 
       getUserProjectDetails((projDetails: ProjectInfo[]) => {
-        console.log(projDetails)
+        console.log(projDetails);
         setAllProjectsDetails(projDetails);
-      })
+      });
     }
   }, [userData]);
 
@@ -317,10 +315,22 @@ const Chat = () => {
       setChatLog(chatLog.concat([{ msg: input, source: "user" }]));
 
       // Put new chat message in DB so API can process it.
-      axios.put(apiUrl + "project/" + activeProjectId, {
-        user_id: userData.mongo_id,
-        msg: input,
-      });
+      // axios.put(apiUrl + "project/" + activeProjectId, {
+      //   user_id: userData.mongo_id,
+      //   msg: input,
+      // });
+      const userId = userData.mongo_id;
+      axios.put(
+        apiUrl + "project/" + activeProjectId,
+        {
+          chat: { [userId]: chatLog },
+        },
+        {
+          params: {
+            user_id: userId,
+          },
+        }
+      );
       console.log(
         "Pushed the following user input to an entry of the database's projects collection: " +
           input
@@ -332,6 +342,10 @@ const Chat = () => {
       // Reset the input box.
       setInput("");
     }
+  };
+
+  const handleChatDelete = () => {
+    setChatLog([firstChatMsg]);
   };
 
   return (
@@ -412,21 +426,29 @@ const Chat = () => {
 
         {/* *** Patent entry area *** */}
         <Col xs={3}>
-          <Row className="rounded shadow py-2 px-2 mx-1" style={{backgroundColor: "#E6E6E6"}}>
+          <Row
+            className="rounded shadow py-2 px-2 mx-1"
+            style={{ backgroundColor: "#E6E6E6" }}
+          >
             Enter patents you would like the AI to consider in your question.
-            <PatentEntry 
+            <PatentEntry
               apiUrl={apiUrl}
               projectId={activeProjectId}
               userId={userData.mongo_id}
             />
           </Row>
 
-          <Row className="rounded shadow py-2 px-2 mx-1 my-4" style={{backgroundColor: "#E6E6E6"}}>
+          <Row
+            className="rounded shadow py-2 px-2 mx-1 my-4"
+            style={{ backgroundColor: "#E6E6E6" }}
+          >
             Saved chat snippets:
           </Row>
 
           <Row className="shadow rounded mx-1 my-4">
-            <Button variant="outline-danger">Clear All Chat Messages</Button>
+            <Button variant="outline-danger" onClick={handleChatDelete}>
+              Clear All Chat Messages
+            </Button>
           </Row>
         </Col>
       </Row>
