@@ -3,6 +3,7 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import Alert from "react-bootstrap/Alert";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
@@ -18,6 +19,7 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
   const [patentNumber, setPatentNumber] = useState("");
   const [patentOfficeCode, setPatentOfficeCode] = useState("US");
   const [patentsToProcess, setPatentsToProcess] = useState([] as string[]);
+  const [showPatentNotFound, setShowPatentNotFound] = useState(false);
 
   useEffect(() => {
     const pullPatent = async () => {
@@ -46,7 +48,19 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
             if (error.response.status === 400) {
               console.log("Failed to pull " + patent + " into backend DB.");
               // TODO handle error
+            } else if (error.response.status === 404) {
+              console.log(
+                "Patent " + patentOfficeCode + patentNumber + " not found."
+              );
+              setShowPatentNotFound(true);
             }
+            // } else if (error.request) {
+            //   if (error.request.status === 0) {
+            //     console.log(
+            //       "Patent " + patentOfficeCode + patentNumber + " not found."
+            //     );
+            //     setShowPatentNotFound(true);
+            //   }
           }
         }
       }
@@ -125,6 +139,15 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
 
   return (
     <Container fluid>
+      <Alert
+        variant="danger"
+        onClose={() => setShowPatentNotFound(false)}
+        dismissible
+        show={showPatentNotFound}
+        className="my-2"
+      >
+        Patent not found! Please enter the correct SPIF.
+      </Alert>
       <Row s={1}>
         <Col md={3} style={{ padding: "1px" }}>
           <Form.Select
