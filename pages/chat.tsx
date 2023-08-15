@@ -254,14 +254,17 @@ const Chat = () => {
           }
         });
     }
-    // If the user has a project, get the first one (assumed to be default) TODO allow default to be configurable.
+    // If the user has a project, get one. The arrow function passed in allows
+    //  getUserProjectDetails to set the details on all projects for this user
+    //  to state.
     else {
-      const projectId = userData.project_ids[0];
 
-      getUserProjectDetails((projDetails: ProjectInfo[]) => {
-        console.log(projDetails);
-        setAllProjectsDetails(projDetails);
-      });
+      getUserProjectDetails(
+        (projDetails: ProjectInfo[]) => {
+          console.log(projDetails);
+          setAllProjectsDetails(projDetails);
+        }
+      );
     }
   }, [userData]);
 

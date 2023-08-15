@@ -32,7 +32,6 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
       setPatentsToProcess(patentsToProcess.filter((item) => item !== patent));
 
       try {
-        //  TODO Implement post method in main.py and its DB ops in database.py
         const response = await axios.post(apiUrl + "patent/" + patent);
         console.log(
           "Either " +

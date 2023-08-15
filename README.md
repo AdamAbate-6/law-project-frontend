@@ -1,10 +1,19 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Bootstrap Setup
+## Setup After Cloning
+Make sure you have npm installed from
+
+https://nodejs.org/en/download
+
+Run `npm install`
+
+## Building from Scratch
+
+### Bootstrap Setup
 
 See https://www.youtube.com/watch?v=RR2IMAwNxVU&t=50s for how to configure React-Bootstrap in Next.JS
 
-## Getting Started
+### Default Instructions from Next.JS
 
 First, run the development server:
 
