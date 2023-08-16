@@ -18,8 +18,56 @@ interface PatentEntryParams {
 const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
   const [patentNumber, setPatentNumber] = useState("");
   const [patentOfficeCode, setPatentOfficeCode] = useState("US");
+  // Patents to get from BigQuery if not already in MongoDB.
   const [patentsToProcess, setPatentsToProcess] = useState([] as string[]);
+  // Patents to create indices for if not already in MongoDB.
+  const [patentsToIndex, setPatentsToIndex] = useState([] as string[]);
   const [showPatentNotFound, setShowPatentNotFound] = useState(false);
+
+  useEffect(() => {
+    const makeIndex = async () => {
+      if (patentsToIndex.length == 0) {
+        return () => {};
+      }
+
+      // Get a patent (country code plus number) to process and remove it from the array.
+      const patent = patentsToIndex[0];
+      setPatentsToProcess(patentsToIndex.filter((item) => item !== patent));
+
+      try {
+        const response = await axios.post(apiUrl + "index/" + patent);
+        console.log(
+          "Either INDEX for" +
+            patent +
+            " already exists in backend DB or we successfully pulled it into backend DB."
+        );
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          // If error came from server response rather than during request or elsewhere...
+          if (error.response) {
+            if (error.response.status === 400) {
+              console.log(
+                "Failed to pull patent INDEX for " +
+                  patent +
+                  " into backend DB."
+              );
+              // TODO handle error better.
+              setShowPatentNotFound(true);
+            } else if (error.response.status === 500) {
+              console.log("Failed to make patent INDEX for " + patent);
+              // TODO handle error better.
+              setShowPatentNotFound(true);
+            } else if (error.response.status === 404) {
+              console.log("Failed to find patent " + patent + "in backend DB.");
+              // TODO handle error better.
+              setShowPatentNotFound(true);
+            }
+          }
+        }
+      }
+    };
+    makeIndex();
+  }, [patentsToIndex]);
 
   useEffect(() => {
     const pullPatent = async () => {
@@ -38,6 +86,8 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
             patent +
             " already exists in backend DB or we successfully pulled it into backend DB."
         );
+        // Now that patent is pulled from BigQuery, kick off patent indexing for LLM.
+        setPatentsToIndex(patentsToIndex.concat([patent]));
         // console.log(response.data.title) // To confirm that patent was successfully queried.
       } catch (error) {
         if (axios.isAxiosError(error)) {
