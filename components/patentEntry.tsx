@@ -58,7 +58,9 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
               // TODO handle error better.
               setShowPatentNotFound(true);
             } else if (error.response.status === 404) {
-              console.log("Failed to find patent " + patent + "in backend DB.");
+              console.log(
+                "Failed to find patent " + patent + " in backend DB."
+              );
               // TODO handle error better.
               setShowPatentNotFound(true);
             }
