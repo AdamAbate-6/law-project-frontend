@@ -32,12 +32,12 @@ const PatentEntry = ({ apiUrl, projectId, userId }: PatentEntryParams) => {
 
       // Get a patent (country code plus number) to process and remove it from the array.
       const patent = patentsToIndex[0];
-      setPatentsToProcess(patentsToIndex.filter((item) => item !== patent));
+      setPatentsToIndex(patentsToIndex.filter((item) => item !== patent));
 
       try {
         const response = await axios.post(apiUrl + "index/" + patent);
         console.log(
-          "Either INDEX for" +
+          "Either INDEX for " +
             patent +
             " already exists in backend DB or we successfully pulled it into backend DB."
         );
